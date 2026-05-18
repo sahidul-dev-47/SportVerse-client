@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 import { Orbitron, Inter } from "next/font/google";
+import { Toaster } from "react-hot-toast";
 
 const orbitron = Orbitron({
   subsets: ["latin"],
@@ -44,6 +45,7 @@ export default function RootLayout({ children }) {
           {/* Extra Gradient Overlay */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.15),transparent_25%),radial-gradient(circle_at_bottom_right,rgba(163,230,53,0.08),transparent_25%)]" />
         </div>
+        <Toaster position="top-center" reverseOrder={false}></Toaster>
 
         <div className="relative flex min-h-screen flex-col">
           <Navbar />

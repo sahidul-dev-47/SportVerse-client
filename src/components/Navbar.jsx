@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   MdSportsSoccer,
   MdHome,
   MdGridView,
-  MdCalendarMonth,
   MdAddCircle,
   MdManageAccounts,
   MdLogin,
@@ -16,6 +16,7 @@ import {
   MdClose,
   MdBookmarks,
 } from "react-icons/md";
+import { authClient } from "@/lib/auth-client"; 
 
 // ── Nav Data ──────────────────────────────────────────────────────────────────
 const publicLinks = [
@@ -32,19 +33,19 @@ const privateLinks = [
     label: "My Bookings",
     href: "/bookings",
     icon: <MdBookmarks size={19} />,
-    private: true,
+   
   },
   {
     label: "Add Facility",
     href: "/facilities/add",
     icon: <MdAddCircle size={19} />,
-    private: true,
+  
   },
   {
     label: "Manage My Facilities",
     href: "/facilities/manage",
     icon: <MdManageAccounts size={20} />,
-    private: true,
+   
   },
 ];
 
@@ -81,9 +82,14 @@ function PrivateBadge() {
 }
 
 // ── Profile Dropdown ──────────────────────────────────────────────────────────
-function ProfileDropdown({ onLogout }) {
+function ProfileDropdown({ user, onLogout }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+
+  const getInitials = (name) => {
+    if (!name) return "U";
+    return name.split(" ").map(n => n).join("").toUpperCase().slice(0, 2);
+  };
 
   useEffect(() => {
     const handler = (e) => {
@@ -100,11 +106,15 @@ function ProfileDropdown({ onLogout }) {
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:border-blue-400 hover:shadow-md hover:shadow-blue-500/10 transition-all duration-200"
       >
-        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
-          JD
+        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm overflow-hidden">
+          {user?.image ? (
+            <img src={user.image} alt="Avatar" className="w-full h-full object-cover" />
+          ) : (
+            getInitials(user?.name)
+          )}
         </div>
         <span className="text-sm font-semibold text-gray-700 dark:text-gray-200 hidden sm:block">
-          James D.
+          {user?.name ? user.name.split(" ") : "User"}
         </span>
         <MdKeyboardArrowDown
           size={18}
@@ -121,22 +131,26 @@ function ProfileDropdown({ onLogout }) {
               : "opacity-0 scale-95 -translate-y-3 pointer-events-none"
           }`}
       >
-        {/* User card */}
+        {/* User card profile details */}
         <div className="flex items-center gap-3 px-4 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 border-b border-gray-100 dark:border-white/5">
-          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
-            JD
+          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-md overflow-hidden">
+            {user?.image ? (
+              <img src={user.image} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              getInitials(user?.name)
+            )}
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
-              James Doe
+              {user?.name || "SportVerse User"}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-              james@sportverse.com
+              {user?.email || "No Email Associated"}
             </p>
           </div>
         </div>
 
-        {/* Private nav items */}
+        {/* Private navigation links items list */}
         <div className="py-2">
           <p className="px-4 py-1.5 text-[10px] font-bold tracking-widest text-gray-400 uppercase">
             My Account
@@ -156,7 +170,7 @@ function ProfileDropdown({ onLogout }) {
           ))}
         </div>
 
-        {/* Logout */}
+        {/* Logout execution block */}
         <div className="border-t border-gray-100 dark:border-white/5 p-2">
           <button
             onClick={() => {
@@ -175,8 +189,13 @@ function ProfileDropdown({ onLogout }) {
 }
 
 // ── Mobile Menu ───────────────────────────────────────────────────────────────
-function MobileMenu({ isLoggedIn, activeHref, onNavigate, onLogin, onLogout }) {
-  const allLinks = [...publicLinks, ...(isLoggedIn ? privateLinks : [])];
+function MobileMenu({ isLoggedIn, user, activeHref, onNavigate, onLogout }) {
+  const allLinks = isLoggedIn ? [...publicLinks, ...privateLinks] : publicLinks;
+
+  const getInitials = (name) => {
+    if (!name) return "U";
+    return name.split(" ").map(n => n).join("").toUpperCase().slice(0, 2);
+  };
 
   return (
     <div className="md:hidden bg-white dark:bg-gray-950 border-t border-gray-100 dark:border-white/5">
@@ -207,31 +226,38 @@ function MobileMenu({ isLoggedIn, activeHref, onNavigate, onLogin, onLogout }) {
       <div className="px-3 pb-4 pt-2 border-t border-gray-100 dark:border-white/5 mt-1">
         {isLoggedIn ? (
           <div className="flex items-center justify-between px-2 py-2">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
-                JD
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold overflow-hidden flex-shrink-0">
+                {user?.image ? (
+                  <img src={user.image} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  getInitials(user?.name)
+                )}
               </div>
-              <div>
-                <p className="text-sm font-bold text-gray-900 dark:text-white">
-                  James Doe
+              <div className="min-w-0 flex-1 pl-1">
+                <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                  {user?.name || "User"}
                 </p>
-                <p className="text-xs text-gray-400">james@sportverse.com</p>
+                <p className="text-xs text-gray-400 truncate">
+                  {user?.email || ""}
+                </p>
               </div>
             </div>
             <button
               onClick={onLogout}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors ml-2"
             >
               <MdLogout size={16} /> Logout
             </button>
           </div>
         ) : (
-          <button
-            onClick={onLogin}
-            className="w-full flex items-center justify-center gap-2 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-colors duration-200 shadow-lg shadow-blue-500/25"
-          >
-            <MdLogin size={18} /> Login to your account
-          </button>
+          <Link href="/signin">
+            <button
+              className="w-full flex items-center justify-center gap-2 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-colors duration-200 shadow-lg shadow-blue-500/25"
+            >
+              <MdLogin size={18} /> Login to your account
+            </button>
+          </Link>
         )}
       </div>
     </div>
@@ -240,10 +266,26 @@ function MobileMenu({ isLoggedIn, activeHref, onNavigate, onLogin, onLogout }) {
 
 // ── Main Navbar ───────────────────────────────────────────────────────────────
 export default function Navbar() {
+  const pathname = usePathname(); // 💡 Current active browser URL dynamically listen korbe
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [activeHref, setActiveHref] = useState("/");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  // Better Auth Live Session dynamic validation hook mapping
+  const { data: session } = authClient.useSession();
+  const currentUser = session?.user;
+
+  useEffect(() => {
+    const savedLoginStatus = localStorage.getItem("isLoggedIn");
+    if (session || savedLoginStatus === "true") {
+      setIsLoggedIn(true);
+      if (session) {
+        localStorage.setItem("isLoggedIn", "true");
+      }
+    } else {
+      setIsLoggedIn(false);
+    }
+  }, [session]);
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 10);
@@ -259,7 +301,14 @@ export default function Navbar() {
     return () => window.removeEventListener("resize", handler);
   }, []);
 
-  const visibleLinks = [...publicLinks, ...(isLoggedIn ? privateLinks : [])];
+  const handleLogout = async () => {
+    await authClient.signOut();
+    localStorage.removeItem("isLoggedIn");
+    setIsLoggedIn(false);
+    window.location.href = "/";
+  };
+
+  const visibleLinks = isLoggedIn ? [...publicLinks, ...privateLinks] : publicLinks;
 
   return (
     <header
@@ -282,10 +331,10 @@ export default function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={() => setActiveHref(item.href)}
                 className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap
                   ${
-                    activeHref === item.href
+                    // 💡 Manual state-er bodole dynamic standard path match tracking comparison layout condition
+                    pathname === item.href
                       ? "bg-blue-600 text-white shadow-md shadow-blue-500/25"
                       : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
                   }`}
@@ -297,15 +346,14 @@ export default function Navbar() {
             ))}
           </nav>
 
-          {/* Right: Auth */}
+          {/* Right auth logic status render wrappers */}
           <div className="flex items-center gap-3 ml-auto">
             {isLoggedIn ? (
-              <ProfileDropdown onLogout={() => setIsLoggedIn(false)} />
+              <ProfileDropdown user={currentUser} onLogout={handleLogout} />
             ) : (
               <>
                 <Link href={'/signin'}>
                   <button
-                    onClick={() => setIsLoggedIn(true)}
                     className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-xl text-sm font-bold transition-all duration-200 shadow-md shadow-blue-500/25"
                   >
                     <MdLogin size={18} />
@@ -314,7 +362,6 @@ export default function Navbar() {
                 </Link>
 
                 <Link href={"/signup"}>
-                  {" "}
                   <button className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-xl text-sm font-bold transition-all duration-200 shadow-md shadow-blue-500/25">
                     SignUp
                   </button>
@@ -334,24 +381,18 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile slide menu */}
+      {/* Mobile responsive drawer overlay link items */}
       <div
         className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out
           ${mobileOpen ? "max-h-[700px] opacity-100" : "max-h-0 opacity-0"}`}
       >
         <MobileMenu
           isLoggedIn={isLoggedIn}
-          activeHref={activeHref}
-          onNavigate={(href) => {
-            setActiveHref(href);
-            setMobileOpen(false);
-          }}
-          onLogin={() => {
-            setIsLoggedIn(true);
-            setMobileOpen(false);
-          }}
+          user={currentUser}
+          activeHref={pathname} // 💡 Mobile configuration panel passes dynamic browser pathname
+          onNavigate={() => setMobileOpen(false)}
           onLogout={() => {
-            setIsLoggedIn(false);
+            handleLogout();
             setMobileOpen(false);
           }}
         />

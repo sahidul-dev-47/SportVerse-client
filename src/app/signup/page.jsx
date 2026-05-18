@@ -17,6 +17,10 @@ import { FiUser, FiMail, FiLock, FiArrowRight, FiEye, FiEyeOff } from "react-ico
 import { MdSportsSoccer, MdVerified, MdStar, MdAddPhotoAlternate } from "react-icons/md";
 import { IoShieldCheckmark, IoFlash } from "react-icons/io5";
 import { HiUsers } from "react-icons/hi2";
+import { object } from "better-auth";
+import { authClient } from "@/lib/auth-client";
+import { redirect } from "next/navigation";
+import toast from "react-hot-toast";
 
 // ── Animation variants ────────────────────────────────────────────────────────
 const container = {
@@ -129,8 +133,32 @@ const SignUpPage = () => {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [agreed, setAgreed] = useState(false);
 
-  // const onSubmit = async (e) => { ... };
-  // const handleGoogleSignIn = async () => { ... };
+  
+ const onSubmit = async(e) => {
+   e.preventDefault()
+
+   const formData = new FormData(e.currentTarget)
+   const user = Object.fromEntries(formData.entries())
+   
+   const {data , error } = await authClient.signUp.email({
+    name: user.name ,
+    email: user.email,
+    image: user.image ,
+    password: user.password ,
+   })
+   if(data){
+    redirect('/signin')
+   }
+   if(error){
+    toast.error('sign in failed')
+   }
+  
+ }
+ const handleGoogleSignIn = async () => {
+     await authClient.signIn.social({
+       provider: "google",
+     })
+   }
 
   return (
     <div className="min-h-screen bg-gray-950 flex">
@@ -283,6 +311,7 @@ const SignUpPage = () => {
 
               {/* Google */}
               <button
+              onClick={handleGoogleSignIn}
                 type="button"
                 className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all duration-200 group cursor-pointer"
               >
@@ -300,7 +329,7 @@ const SignUpPage = () => {
               </div>
 
               {/* Form */}
-              <Form className="flex flex-col gap-4">
+              <Form onSubmit={onSubmit} className="flex flex-col gap-4">
 
                 {/* Full Name */}
                 <TextField isRequired name="name" type="text">
@@ -360,6 +389,8 @@ const SignUpPage = () => {
                       {avatarUrl ? (
                         <Image
                           src={avatarUrl}
+                          width={400}
+                          height={300}
                           alt="Preview"
                           className="w-full h-full object-cover"
                           onError={(e) => { e.currentTarget.style.display = "none"; }}

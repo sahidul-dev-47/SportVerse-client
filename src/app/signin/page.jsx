@@ -17,6 +17,8 @@ import { FcGoogle } from "react-icons/fc";
 import { FiMail, FiLock, FiArrowRight, FiEye, FiEyeOff } from "react-icons/fi";
 import { MdSportsSoccer, MdVerified, MdStar } from "react-icons/md";
 import { IoShieldCheckmark } from "react-icons/io5";
+import { authClient } from "@/lib/auth-client";
+import toast from "react-hot-toast";
 
 // ── Animation variants ────────────────────────────────────────────────────────
 const container = {
@@ -50,8 +52,44 @@ const SignInPage = () => {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
 
-  // const onSubmit = async (e) => { ... };
-  // const handleGoogleSignIn = async () => { ... };
+  
+  const onSubmit = async (e) => {
+    e.preventDefault();
+
+   
+    const formElement = e.currentTarget;
+    const formData = new FormData(formElement);
+    
+    const email = formData.get("email");
+    const password = formData.get("password");
+
+    try {
+      const { data, error } = await authClient.signIn.email({
+        email: email,
+        password: password,
+      });
+
+      if (data) {
+        localStorage.setItem("isLoggedIn", "true");
+        toast.success("Successfully logged in!");
+        
+       
+        window.location.href = "/";
+      }
+      
+      if (error) {
+        toast.error("Sign in failed");
+      }
+    } catch (err) {
+      toast.error("An unexpected error occurred");
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    await authClient.signIn.social({
+      provider: "google",
+    })
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 flex">
@@ -140,7 +178,7 @@ const SignInPage = () => {
               />
             </motion.div>
             <motion.div
-              animate={{ y: [0, 8, 0] }}
+              animate={{ y: 0}}
               transition={{ repeat: Infinity, repeatType: "mirror", duration: 5, ease: "easeInOut" }}
             >
               <StatCard
@@ -225,8 +263,8 @@ const SignInPage = () => {
 
               {/* Google button */}
               <button
+              onClick={handleGoogleSignIn}
                 type="button"
-                // onClick={handleGoogleSignIn}
                 className="w-full flex items-center justify-center gap-3 py-3.5 px-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all duration-200 group cursor-pointer"
               >
                 <FcGoogle size={19} />
@@ -243,7 +281,7 @@ const SignInPage = () => {
               </div>
 
               {/* Form */}
-              <Form className="flex flex-col gap-4">
+              <Form onSubmit={onSubmit} className="flex flex-col gap-4">
 
                 {/* Email */}
                 <TextField
