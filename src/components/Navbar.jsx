@@ -20,13 +20,32 @@ import {
 // ── Nav Data ──────────────────────────────────────────────────────────────────
 const publicLinks = [
   { label: "Home", href: "/", icon: <MdHome size={19} /> },
-  { label: "All Facilities", href: "/facilities", icon: <MdGridView size={19} /> },
+  {
+    label: "All Facilities",
+    href: "/facilities",
+    icon: <MdGridView size={19} />,
+  },
 ];
 
 const privateLinks = [
-  { label: "My Bookings", href: "/bookings", icon: <MdBookmarks size={19} />, private: true },
-  { label: "Add Facility", href: "/facilities/add", icon: <MdAddCircle size={19} />, private: true },
-  { label: "Manage My Facilities", href: "/facilities/manage", icon: <MdManageAccounts size={20} />, private: true },
+  {
+    label: "My Bookings",
+    href: "/bookings",
+    icon: <MdBookmarks size={19} />,
+    private: true,
+  },
+  {
+    label: "Add Facility",
+    href: "/facilities/add",
+    icon: <MdAddCircle size={19} />,
+    private: true,
+  },
+  {
+    label: "Manage My Facilities",
+    href: "/facilities/manage",
+    icon: <MdManageAccounts size={20} />,
+    private: true,
+  },
 ];
 
 // ── Logo ──────────────────────────────────────────────────────────────────────
@@ -40,7 +59,7 @@ function Logo() {
           <MdSportsSoccer size={22} className="text-white" />
         </div>
       </div>
-      <div className="flex flex-col leading-none">
+      <div className="flex flex-col leading-none space-y-2">
         <span className="text-[1.15rem] font-black tracking-tight text-gray-900 dark:text-white">
           Sport<span className="text-blue-600">Verse</span>
         </span>
@@ -96,9 +115,10 @@ function ProfileDropdown({ onLogout }) {
       {/* Dropdown panel */}
       <div
         className={`absolute right-0 mt-3 w-64 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-white/10 shadow-2xl shadow-black/10 dark:shadow-black/50 overflow-hidden z-50 transition-all duration-200 origin-top-right
-          ${open
-            ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
-            : "opacity-0 scale-95 -translate-y-3 pointer-events-none"
+          ${
+            open
+              ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
+              : "opacity-0 scale-95 -translate-y-3 pointer-events-none"
           }`}
       >
         {/* User card */}
@@ -107,8 +127,12 @@ function ProfileDropdown({ onLogout }) {
             JD
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-bold text-gray-900 dark:text-white truncate">James Doe</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">james@sportverse.com</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
+              James Doe
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+              james@sportverse.com
+            </p>
           </div>
         </div>
 
@@ -135,7 +159,10 @@ function ProfileDropdown({ onLogout }) {
         {/* Logout */}
         <div className="border-t border-gray-100 dark:border-white/5 p-2">
           <button
-            onClick={() => { setOpen(false); onLogout(); }}
+            onClick={() => {
+              setOpen(false);
+              onLogout();
+            }}
             className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 transition-colors duration-150"
           >
             <MdLogout size={18} />
@@ -160,9 +187,10 @@ function MobileMenu({ isLoggedIn, activeHref, onNavigate, onLogin, onLogout }) {
             href={item.href}
             onClick={() => onNavigate(item.href)}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
-              ${activeHref === item.href
-                ? "bg-blue-600 text-white shadow-md shadow-blue-500/25"
-                : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5"
+              ${
+                activeHref === item.href
+                  ? "bg-blue-600 text-white shadow-md shadow-blue-500/25"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5"
               }`}
           >
             {item.icon}
@@ -184,7 +212,9 @@ function MobileMenu({ isLoggedIn, activeHref, onNavigate, onLogin, onLogout }) {
                 JD
               </div>
               <div>
-                <p className="text-sm font-bold text-gray-900 dark:text-white">James Doe</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-white">
+                  James Doe
+                </p>
                 <p className="text-xs text-gray-400">james@sportverse.com</p>
               </div>
             </div>
@@ -222,7 +252,9 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    const handler = () => { if (window.innerWidth >= 768) setMobileOpen(false); };
+    const handler = () => {
+      if (window.innerWidth >= 768) setMobileOpen(false);
+    };
     window.addEventListener("resize", handler);
     return () => window.removeEventListener("resize", handler);
   }, []);
@@ -232,15 +264,15 @@ export default function Navbar() {
   return (
     <header
       className={`sticky top-0 z-50 w-full transition-all duration-300
-        ${scrolled
-          ? "bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl shadow-lg shadow-black/5 dark:shadow-black/30"
-          : "bg-white dark:bg-gray-950"
+        ${
+          scrolled
+            ? "bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl shadow-lg shadow-black/5 dark:shadow-black/30"
+            : "bg-white dark:bg-gray-950"
         }
         border-b border-gray-200 dark:border-white/[0.07]`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center h-[68px] gap-6">
-
           {/* Logo */}
           <Logo />
 
@@ -252,9 +284,10 @@ export default function Navbar() {
                 href={item.href}
                 onClick={() => setActiveHref(item.href)}
                 className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap
-                  ${activeHref === item.href
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-500/25"
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
+                  ${
+                    activeHref === item.href
+                      ? "bg-blue-600 text-white shadow-md shadow-blue-500/25"
+                      : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
                   }`}
               >
                 {item.icon}
@@ -269,13 +302,24 @@ export default function Navbar() {
             {isLoggedIn ? (
               <ProfileDropdown onLogout={() => setIsLoggedIn(false)} />
             ) : (
-              <button
-                onClick={() => setIsLoggedIn(true)}
-                className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-xl text-sm font-bold transition-all duration-200 shadow-md shadow-blue-500/25"
-              >
-                <MdLogin size={18} />
-                Login
-              </button>
+              <>
+                <Link href={'/signin'}>
+                  <button
+                    onClick={() => setIsLoggedIn(true)}
+                    className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-xl text-sm font-bold transition-all duration-200 shadow-md shadow-blue-500/25"
+                  >
+                    <MdLogin size={18} />
+                    LogIn
+                  </button>
+                </Link>
+
+                <Link href={"/signup"}>
+                  {" "}
+                  <button className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-xl text-sm font-bold transition-all duration-200 shadow-md shadow-blue-500/25">
+                    SignUp
+                  </button>
+                </Link>
+              </>
             )}
 
             {/* Hamburger */}
@@ -298,9 +342,18 @@ export default function Navbar() {
         <MobileMenu
           isLoggedIn={isLoggedIn}
           activeHref={activeHref}
-          onNavigate={(href) => { setActiveHref(href); setMobileOpen(false); }}
-          onLogin={() => { setIsLoggedIn(true); setMobileOpen(false); }}
-          onLogout={() => { setIsLoggedIn(false); setMobileOpen(false); }}
+          onNavigate={(href) => {
+            setActiveHref(href);
+            setMobileOpen(false);
+          }}
+          onLogin={() => {
+            setIsLoggedIn(true);
+            setMobileOpen(false);
+          }}
+          onLogout={() => {
+            setIsLoggedIn(false);
+            setMobileOpen(false);
+          }}
         />
       </div>
     </header>

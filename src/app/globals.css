@@ -1,5 +1,40 @@
 @import "tailwindcss";
-@import "@heroui/styles"; 
+@import "@heroui/styles";
 
+:root {
+  --background: #050816;
+  --card: #0b1120;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --blue: #2563eb;
+  --purple: #7c3aed;
+  --lime: #a3e635;
+}
 
+body {
+  background: radial-gradient(
+      circle at top left,
+      rgba(124, 58, 237, 0.18),
+      transparent 25%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      rgba(163, 230, 53, 0.15),
+      transparent 25%
+    ),
+    #050816;
 
+  color: white;
+  overflow-x: hidden;
+  font-family: var(--font-inter);
+}
+
+.heading-font {
+  font-family: var(--font-orbitron);
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
