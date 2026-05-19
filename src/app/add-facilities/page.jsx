@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "@/lib/auth-client";
 
+
 const FACILITY_TYPES = [
   { label: "Football Ground",  emoji: "⚽" },
   { label: "Cricket Ground",   emoji: "🏏" },
@@ -75,7 +76,7 @@ export default function AddFacilitiesPage() {
     facilityName: "",
     facilityType: "",
     location:     "",
-    imageUrl:     "",
+    image:     "",
     pricePerHour: "",
     capacity:     "",
     description:  "",
@@ -120,7 +121,7 @@ export default function AddFacilitiesPage() {
 
   const patch = (field) => (e) => {
     setForm((f) => ({ ...f, [field]: e.target.value }));
-    if (field === "imageUrl") setImgError(false);
+    if (field === "image") setImgError(false);
   };
 
   const toggleSlot = (slot) =>
@@ -130,7 +131,7 @@ export default function AddFacilitiesPage() {
 
   const canNext = () => {
     if (step === 1) return form.facilityName && form.facilityType && form.location;
-    if (step === 2) return form.pricePerHour && form.capacity && form.description && form.imageUrl;
+    if (step === 2) return form.pricePerHour && form.capacity && form.description && form.image;
     if (step === 3) return selectedSlots.length > 0;
     return true;
   };
@@ -148,7 +149,7 @@ export default function AddFacilitiesPage() {
     setImgError(false);
     setForm({
       facilityName: "", facilityType: "", location: "",
-      imageUrl: "", pricePerHour: "", capacity: "",
+      image: "", pricePerHour: "", capacity: "",
       description: "", ownerEmail: "owner@yourplatform.com",
     });
   };
@@ -305,7 +306,7 @@ export default function AddFacilitiesPage() {
                   <motion.div key="s2" variants={slide} initial="hidden" animate="visible" exit="exit" className="space-y-5">
                     <StepHeader title="Facility Details" sub="Pricing, capacity, image and description" />
                     <div className="grid grid-cols-2 gap-4">
-                      <Field label="Price Per Hour (৳)">
+                      <Field label="Price Per Hour ($)"> 
                         <input name="pricePerHour" className={inputCls} type="number" min="0" placeholder="e.g. 1500" value={form.pricePerHour} onChange={patch("pricePerHour")} />
                       </Field>
                       <Field label="Capacity (persons)">
@@ -317,15 +318,15 @@ export default function AddFacilitiesPage() {
                       <div className="relative">
                         <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm select-none pointer-events-none">🔗</span>
                         <input
-                          name="imageUrl"
+                          name="url"
                           className={`${inputCls} pl-10`}
                           placeholder="https://i.ibb.co/your-image.jpg"
-                          value={form.imageUrl}
-                          onChange={patch("imageUrl")}
+                          value={form.image}
+                          onChange={patch("image")}
                         />
                       </div>
                       <AnimatePresence>
-                        {form.imageUrl && !imgError && (
+                        {form.image && !imgError && (
                           <motion.div
                             key="preview"
                             initial={{ opacity: 0, y: 6 }}
@@ -333,10 +334,10 @@ export default function AddFacilitiesPage() {
                             exit={{ opacity: 0 }}
                             className="mt-2.5 rounded-xl overflow-hidden border border-white/10 h-40"
                           >
-                            <img src={form.imageUrl} alt="Preview" className="w-full h-full object-cover" onError={() => setImgError(true)} />
+                            <img src={form.image} alt="Preview" className="w-full h-full object-cover" onError={() => setImgError(true)} />
                           </motion.div>
                         )}
-                        {form.imageUrl && imgError && (
+                        {form.image && imgError && (
                           <motion.p key="err" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-2 text-xs text-red-400/80">
                             ⚠ Could not load image — double-check the URL.
                           </motion.p>
@@ -394,9 +395,9 @@ export default function AddFacilitiesPage() {
                 {step === 4 && (
                   <motion.div key="s4" variants={slide} initial="hidden" animate="visible" exit="exit" className="space-y-5">
                     <StepHeader title="Review & Submit" sub="Confirm everything before going live" />
-                    {form.imageUrl && !imgError && (
+                    {form.image && !imgError && (
                       <div className="rounded-xl overflow-hidden h-44 border border-white/10">
-                        <img src={form.imageUrl} alt={form.facilityName} className="w-full h-full object-cover" />
+                        <img src={form.image} alt={form.facilityName} className="w-full h-full object-cover" />
                       </div>
                     )}
                     <div className="bg-white/[0.02] rounded-xl border border-white/8 divide-y divide-white/5 overflow-hidden">
@@ -406,7 +407,7 @@ export default function AddFacilitiesPage() {
                         { k: "Location",      v: form.location },
                         { k: "Price / Hour",  v: `৳ ${form.pricePerHour}` },
                         { k: "Capacity",      v: `${form.capacity} persons` },
-                        { k: "Image URL",     v: form.imageUrl },
+                        { k: "Image URL",     v: form.image },
                       ].map(({ k, v }) => (
                         <div key={k} className="flex justify-between items-start gap-4 px-4 py-3 text-sm">
                           <span className="text-white/35 shrink-0">{k}</span>
