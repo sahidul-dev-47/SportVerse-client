@@ -23,7 +23,7 @@ const publicLinks = [
   { label: "Home", href: "/", icon: <MdHome size={19} /> },
   {
     label: "All Facilities",
-    href: "/facilities",
+    href: "/all-facilities",
     icon: <MdGridView size={19} />,
   },
 ];
@@ -37,7 +37,7 @@ const privateLinks = [
   },
   {
     label: "Add Facility",
-    href: "/facilities/add",
+    href: "/add-facilities",
     icon: <MdAddCircle size={19} />,
   
   },
