@@ -530,7 +530,7 @@ function EmptyState() {
         </p>
       </div>
       <Link
-        href="/add-facility"
+        href="/add-facilities"
         className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-blue-600/25"
       >
         <MdAdd size={18} /> Add Your First Facility
