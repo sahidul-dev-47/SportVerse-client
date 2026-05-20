@@ -43,7 +43,7 @@ const privateLinks = [
   },
   {
     label: "Manage My Facilities",
-    href: "/facilities/manage",
+    href: "/manage-facilities",
     icon: <MdManageAccounts size={20} />,
    
   },

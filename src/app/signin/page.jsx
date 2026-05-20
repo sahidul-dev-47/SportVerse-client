@@ -94,9 +94,6 @@ const SignInPage = () => {
   return (
     <div className="min-h-screen bg-gray-950 flex">
 
-      {/* ══════════════════════════════════════════
-          LEFT PANEL — background image + branding
-      ══════════════════════════════════════════ */}
       <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden flex-col justify-between p-10">
         {/* Background image */}
         <Image
@@ -211,9 +208,9 @@ const SignInPage = () => {
         </div>
       </div>
 
-      {/* ══════════════════════════════════════════
-          RIGHT PANEL — sign in form
-      ══════════════════════════════════════════ */}
+    
+          {/* RIGHT PANEL — sign in form */}
+  
       <div className="flex-1 flex items-center justify-center px-5 py-12 bg-gray-950">
         <motion.div
           variants={container}

@@ -76,7 +76,7 @@ function PasswordStrength({ password }) {
   );
 }
 
-// ── Step indicator ────────────────────────────────────────────────────────────
+// ── Step indicator 
 function StepDot({ active, done, label, number }) {
   return (
     <div className="flex flex-col items-center gap-1.5">
@@ -94,7 +94,7 @@ function StepDot({ active, done, label, number }) {
   );
 }
 
-// ── Left panel feature card ───────────────────────────────────────────────────
+// ── Left panel feature card 
 function FeatureCard({ icon, title, desc, delay }) {
   return (
     <motion.div
@@ -126,7 +126,7 @@ function DarkInput({ icon: Icon, placeholder, className = "" }) {
   );
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
+// ── Main page 
 const SignUpPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState("");
@@ -163,9 +163,9 @@ const SignUpPage = () => {
   return (
     <div className="min-h-screen bg-gray-950 flex">
 
-      {/* ══════════════════════════════════════════
-          LEFT PANEL
-      ══════════════════════════════════════════ */}
+
+          {/* LEFT PANEL */}
+     
       <div className="hidden lg:flex lg:w-[48%] relative overflow-hidden flex-col justify-between p-10">
         {/* Background image */}
         <Image
@@ -262,9 +262,9 @@ const SignUpPage = () => {
         </div>
       </div>
 
-      {/* ══════════════════════════════════════════
-          RIGHT PANEL — sign up form
-      ══════════════════════════════════════════ */}
+     
+          {/* RIGHT PANEL — sign up form */}
+  
       <div className="flex-1 flex items-center justify-center px-5 py-10 bg-gray-950 overflow-y-auto">
         <motion.div
           variants={container}

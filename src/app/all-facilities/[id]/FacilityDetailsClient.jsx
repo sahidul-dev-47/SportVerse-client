@@ -391,7 +391,7 @@ function SuccessCard({ booking, onReset }) {
             },
             {
               label: "Total",
-              value: `৳${booking.totalPrice.toLocaleString()}`,
+              value: `$${booking.totalPrice.toLocaleString()}`,
             },
             { label: "Status", value: "⏳ Pending" },
           ].map(({ label, value }) => (
