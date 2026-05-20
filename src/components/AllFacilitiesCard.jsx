@@ -191,7 +191,7 @@ export default function AllFacilitiesCard({ facility }) {
 
         {/* Book Now */}
         <Link
-          href={`/facilities/${_id}/book`}
+          href={`/all-facilities/${_id}`}
           className="group/btn mt-auto flex items-center justify-center gap-2.5 w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-black uppercase tracking-wide transition-all duration-200 shadow-md shadow-blue-600/25 hover:shadow-blue-500/35 hover:scale-[1.02] active:scale-[0.98]"
         >
           Book Now
