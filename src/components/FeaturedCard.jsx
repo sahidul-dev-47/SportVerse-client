@@ -16,4 +16,4 @@ const FeaturedPage = async () => {
     );
 };
 
-export default FeaturedPage;
+export default FeaturedPage; 

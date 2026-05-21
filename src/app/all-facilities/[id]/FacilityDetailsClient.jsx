@@ -42,7 +42,7 @@ function InfoChip({ icon, label, value }) {
   );
 }
 
-// ── Booking Panel ─────────────────────────────────────────────────────────────
+// ── Booking Panel 
 
 function BookingPanel({ facility, onClose, onSuccess }) {
   const {
@@ -429,7 +429,6 @@ export default function FacilityDetailsClient({ facility }) {
       {/* Hero Image */}
       <div className="relative w-full h-[45vh] md:h-[55vh] lg:h-[60vh] overflow-hidden bg-gray-900">
         {!imgError && image && (
-          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={image}
             alt={facilityName}

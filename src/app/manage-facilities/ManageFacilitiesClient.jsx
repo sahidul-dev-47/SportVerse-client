@@ -22,6 +22,7 @@ import {
   MdDescription,
 } from "react-icons/md";
 import { IoFlash } from "react-icons/io5";
+import { authClient } from "@/lib/auth-client";
 
 // Constants 
 const FACILITY_TYPES = [
@@ -95,42 +96,62 @@ function EditModal({ facility, ownerEmail, onClose, onSaved }) {
   const toggleSlot = (s) =>
     setSlots((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]);
 
-  const handleSave = async () => {
-    if (!form.facilityName.trim() || !form.facilityType || !form.location.trim()) {
-      toast.error("Fill in name, type and location.", { style: ts }); return;
+ const handleSave = async () => {
+  if (!form.facilityName.trim() || !form.facilityType || !form.location.trim()) {
+    toast.error("Fill in name, type and location.", { style: ts });
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    
+    const tokenRes = await authClient.token();
+    const token = tokenRes?.data?.token;
+
+    if (!token) {
+      throw new Error("Authentication failed. Please login again.");
     }
-    setLoading(true);
-    const updatePayload = {...form};
+
+    const updatePayload = { ...form };
     delete updatePayload._id;
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/facilities/${facility._id}`,
-        {
-          method:  "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...updatePayload,
-            availableTimeSlots: slots,
-            ownerEmail: ownerEmail, 
-          }),
-        }
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Update failed");
+
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_URL}/facilities/${facility._id}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,   
+        },
+        body: JSON.stringify({
+          ...updatePayload,
+          availableTimeSlots: slots,
+          ownerEmail: ownerEmail,
+        }),
       }
-      const updated = await res.json();
-      toast.success("Facility updated!", {
-        style: { ...ts, border: "1px solid rgba(34,197,94,0.3)" },
-        iconTheme: { primary: "#22c55e", secondary: "#111827" },
-      });
-      onSaved(updated);
-    } catch (err) {
-      toast.error(err.message || "Update failed. Try again.", { style: ts });
-    } finally {
-      setLoading(false);
+    );
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || "Update failed");
     }
-  };
+
+    const updated = await res.json();
+
+    toast.success("Facility updated successfully!", {
+      style: { ...ts, border: "1px solid rgba(34,197,94,0.3)" },
+    });
+
+    onSaved(updated);
+    onClose();       
+  } catch (err) {
+    console.error(err);
+    toast.error(err.message || "Update failed. Try again.", { style: ts });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <>
@@ -321,31 +342,47 @@ function DeleteModal({ facility, ownerEmail, onClose, onDeleted }) {
   const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/facilities/${facility._id}`,
-        {
-          method:  "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ownerEmail : ownerEmail?.trim()}), 
-        }
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Delete failed");
-      }
-      toast.success("Facility deleted.", {
-        style: { ...ts, border: "1px solid rgba(239,68,68,0.3)" },
-        iconTheme: { primary: "#ef4444", secondary: "#111827" },
-      });
-      onDeleted(facility._id);
-    } catch (err) {
-      toast.error(err.message || "Delete failed. Try again.", { style: ts });
-    } finally {
-      setLoading(false);
+  setLoading(true);
+
+  try {
+    
+    const tokenRes = await authClient.token();
+    const token = tokenRes?.data?.token;
+
+    if (!token) {
+      throw new Error("Authentication failed. Please login again.");
     }
-  };
+
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_URL}/facilities/${facility._id}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,   
+        },
+        body: JSON.stringify({ ownerEmail: ownerEmail?.trim() }),
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || "Delete failed");
+    }
+
+    toast.success("Facility deleted successfully.", {
+      style: { ...ts, border: "1px solid rgba(239,68,68,0.3)" },
+    });
+
+    onDeleted(facility._id);
+    onClose();
+  } catch (err) {
+    console.error(err);
+    toast.error(err.message || "Delete failed. Try again.", { style: ts });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <>
@@ -545,7 +582,7 @@ export default function ManageFacilitiesClient({ facilities: initial, ownerEmail
   const [editing, setEditing]       = useState(null); // facility being edited
   const [deleting, setDeleting]     = useState(null); // facility being deleted
 
-  // Called when edit modal saves successfully
+
   const handleSaved = (updated) => {
     setFacilities((prev) =>
       prev.map((f) => (f._id === updated._id ? { ...f, ...updated } : f))
@@ -553,7 +590,7 @@ export default function ManageFacilitiesClient({ facilities: initial, ownerEmail
     setEditing(null);
   };
 
-  // Called when delete modal confirms
+  
   const handleDeleted = (id) => {
     setFacilities((prev) => prev.filter((f) => f._id !== id));
     setDeleting(null);

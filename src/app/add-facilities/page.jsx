@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSession } from "@/lib/auth-client";
+import { authClient, useSession } from "@/lib/auth-client";
 
 
 const FACILITY_TYPES = [
@@ -65,8 +65,8 @@ function Field({ label, children }) {
 }
 
 export default function AddFacilitiesPage() {
-  const {data:session} = useSession();
-  const userEmail = session?.user?.email || ""
+  const { data: session, isPending } = useSession();
+  const userEmail = session?.user?.email || "";
   const [step, setStep] = useState(1);
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [submitted, setSubmitted] = useState(false);
@@ -82,40 +82,63 @@ export default function AddFacilitiesPage() {
     description:  "",
     ownerEmail:   "",
   });
-
- const onSubmit = async (e) => {
+const onSubmit = async (e) => {
   e.preventDefault();
 
-  const facilitiesData = {
-    ...form,
-    ownerEmail:userEmail,
-    selectedSlots: selectedSlots, 
-  };
-
-  console.log("Submitting Data:", facilitiesData);
-
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/facilities`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(facilitiesData),
-    });
-
-    if (!res.ok) {
-      throw new Error(`Server error: ${res.status}`);
+  
+    if (isPending) {
+      alert("Session loading...");
+      return;
     }
+
+    if (!session?.user?.email) {
+      alert("Please login first");
+      return;
+    }
+
+    const tokenResponse = await authClient.token();
+    const token = tokenResponse?.data?.token;
+
+    if (!token) {
+      alert("Token not found. Please login again.");
+      return;
+    }
+
+    const facilitiesData = {
+      ...form,
+      ownerEmail: session.user.email.trim().toLowerCase(),
+      availableTimeSlots: selectedSlots,
+      pricePerHour: Number(form.pricePerHour),
+      capacity: Number(form.capacity),
+      createdAt: new Date(),
+    };
+
+    console.log("SENDING:", facilitiesData);
+
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_URL}/facilities`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(facilitiesData),
+      }
+    );
 
     const data = await res.json();
-    console.log("Success Response:", data);
 
-    if (data.acknowledged) {
-      setSubmitted(true);
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to add facility");
     }
 
+    setSubmitted(true);
+
   } catch (error) {
-    console.error("Submission failed:", error);
+    console.error("SUBMIT ERROR:", error);
+    alert(error.message || "Something went wrong");
   }
 };
 
@@ -405,7 +428,7 @@ export default function AddFacilitiesPage() {
                         { k: "Facility Name", v: form.facilityName },
                         { k: "Type",          v: form.facilityType },
                         { k: "Location",      v: form.location },
-                        { k: "Price / Hour",  v: `৳ ${form.pricePerHour}` },
+                        { k: "Price / Hour",  v: `$ ${form.pricePerHour}` },
                         { k: "Capacity",      v: `${form.capacity} persons` },
                         { k: "Image URL",     v: form.image },
                       ].map(({ k, v }) => (
