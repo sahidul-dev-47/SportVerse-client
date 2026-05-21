@@ -31,7 +31,7 @@ const publicLinks = [
 const privateLinks = [
   {
     label: "My Bookings",
-    href: "/bookings",
+    href: "/my-bookings",
     icon: <MdBookmarks size={19} />,
    
   },
@@ -266,12 +266,11 @@ function MobileMenu({ isLoggedIn, user, activeHref, onNavigate, onLogout }) {
 
 // ── Main Navbar ───────────────────────────────────────────────────────────────
 export default function Navbar() {
-  const pathname = usePathname(); // 💡 Current active browser URL dynamically listen korbe
+  const pathname = usePathname();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  // Better Auth Live Session dynamic validation hook mapping
   const { data: session } = authClient.useSession();
   const currentUser = session?.user;
 

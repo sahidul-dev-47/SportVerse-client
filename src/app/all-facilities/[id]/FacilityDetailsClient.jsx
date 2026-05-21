@@ -4,27 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
+import { useRouter } from "next/navigation";
 import {
-  MdLocationOn,
-  MdPeople,
-  MdEmail,
-  MdVerified,
-  MdStar,
-  MdAccessTime,
-  MdArrowBack,
-  MdCalendarMonth,
-  MdAttachMoney,
-  MdCheckCircle,
-  MdSportsSoccer,
-  MdTimer,
-  MdBookmark,
-  MdArrowForward,
-  MdClose,
+  MdLocationOn, MdPeople, MdEmail, MdVerified, MdStar,
+  MdAccessTime, MdArrowBack, MdCalendarMonth, MdAttachMoney,
+  MdCheckCircle, MdSportsSoccer, MdTimer, MdBookmark,
+  MdArrowForward, MdClose,
 } from "react-icons/md";
 import { IoFlash, IoShieldCheckmark } from "react-icons/io5";
 import { BsClockHistory } from "react-icons/bs";
 import { FiUser } from "react-icons/fi";
-import { form } from "framer-motion/client";
+import { authClient } from "@/lib/auth-client";
 
 function Stars({ rating = 5 }) {
   return (
@@ -33,9 +23,7 @@ function Stars({ rating = 5 }) {
         <MdStar
           key={i}
           size={15}
-          className={
-            i < Math.round(rating) ? "text-amber-400" : "text-gray-700"
-          }
+          className={i < Math.round(rating) ? "text-amber-400" : "text-gray-700"}
         />
       ))}
     </div>
@@ -47,14 +35,14 @@ function InfoChip({ icon, label, value }) {
     <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.04] border border-white/8">
       <span className="text-blue-400 flex-shrink-0">{icon}</span>
       <div className="leading-none">
-        <p className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-0.5">
-          {label}
-        </p>
+        <p className="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-0.5">{label}</p>
         <p className="text-sm text-white font-semibold">{value}</p>
       </div>
     </div>
   );
 }
+
+// ── Booking Panel ─────────────────────────────────────────────────────────────
 
 function BookingPanel({ facility, onClose, onSuccess }) {
   const {
@@ -65,20 +53,23 @@ function BookingPanel({ facility, onClose, onSuccess }) {
     ownerEmail,
   } = facility || {};
 
+
+  const { data: session } = authClient.useSession();
+  const router = useRouter();
+
   const [name, setName] = useState("");
   const [date, setDate] = useState("");
   const [slot, setSlot] = useState("");
   const [hours, setHours] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [today, setToday] = useState("");
 
- const [today, setToday] = useState("");
+  useEffect(() => {
+    const formatted = new Date().toISOString().split("T")[0];
+    setToday(formatted);
+  }, []);
 
- useEffect(() => {
-    const formattedDate = new Date().toISOString().split("T")[0];
-    setToday(formattedDate);
-  },[]);
-
- const totalPrice = Number(pricePerHour)*hours;
+  const totalPrice = Number(pricePerHour) * hours;
 
   const ts = {
     background: "#111827",
@@ -87,49 +78,61 @@ function BookingPanel({ facility, onClose, onSuccess }) {
   };
 
   const handleBook = async () => {
-    if (!name.trim()) {
-      toast.error("Enter your name.", { style: ts });
-      return;
-    }
-    if (!date) {
-      toast.error("Select a booking date.", { style: ts });
-      return;
-    }
-    if (!slot) {
-      toast.error("Select a time slot.", { style: ts });
+    if (!name.trim()) return toast.error("Enter your name.", { style: ts });
+    if (!date) return toast.error("Select a booking date.", { style: ts });
+    if (!slot) return toast.error("Select a time slot.", { style: ts });
+
+    const currentUserEmail = session?.user?.email;
+    if (!currentUserEmail) {
+      toast.error("Please sign in to book a facility.", { style: ts });
       return;
     }
 
     setLoading(true);
     try {
+      const { data: tokenData } = await authClient.token();
+
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_SERVER_URL}/bookings`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "authorization": `Bearer ${tokenData?.token || ""}`,
+          },
           body: JSON.stringify({
-            facilityId: _id,
+            facilityId:    _id,
             facilityName,
-            ownerEmail,
-            customerName: name,
-            bookingDate: date,
-            timeSlot: slot,
+            facilityType:  facility.facilityType || "",
+            location:      facility.location     || "",
+            facilityImage: facility.image        || "",
+            ownerEmail:    ownerEmail            || "",
+            userEmail:     currentUserEmail,
+            customerName:  name,
+            bookingDate:   date,
+            timeSlot:      slot,
             hours,
             totalPrice,
-            status: "pending",
+            status:        "pending",
           }),
-        },
+        }
       );
 
       if (!res.ok) throw new Error();
 
+      const newBooking = await res.json();
+      onSuccess(newBooking);
+
       toast.success("Booking confirmed! 🎉", {
-        style: { ...ts, border: "1px solid rgba(34,197,94,0.3)" },
+        style:     { ...ts, border: "1px solid rgba(34,197,94,0.3)" },
         iconTheme: { primary: "#22c55e", secondary: "#111827" },
-        duration: 4000,
+        duration:  4000,
       });
 
-      onSuccess({ facilityName, date, slot, hours, totalPrice });
+      setTimeout(() => {
+        router.push("/my-bookings");
+        router.refresh();
+      }, 2000);
     } catch {
       toast.error("Booking failed. Try again.", {
         style: { ...ts, border: "1px solid rgba(239,68,68,0.3)" },
@@ -158,12 +161,8 @@ function BookingPanel({ facility, onClose, onSuccess }) {
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-600/15 border border-blue-500/25 text-blue-400 text-[10px] font-bold uppercase tracking-widest mb-2">
             <IoFlash size={10} /> Book Now
           </span>
-          <h3 className="text-lg font-black text-white tracking-tight">
-            Reserve Your Slot
-          </h3>
-          <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">
-            {facilityName}
-          </p>
+          <h3 className="text-lg font-black text-white tracking-tight">Reserve Your Slot</h3>
+          <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{facilityName}</p>
         </div>
         <button
           type="button"
@@ -175,15 +174,13 @@ function BookingPanel({ facility, onClose, onSuccess }) {
       </div>
 
       <div className="flex flex-col gap-5 p-6 overflow-y-auto">
+        {/* Name */}
         <div>
           <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
             Your Name
           </label>
           <div className="relative">
-            <FiUser
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
-              size={15}
-            />
+            <FiUser className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={15} />
             <input
               type="text"
               className={`${inp} pl-10`}
@@ -195,15 +192,13 @@ function BookingPanel({ facility, onClose, onSuccess }) {
           </div>
         </div>
 
+        {/* Facility (readonly) */}
         <div>
           <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
             Facility
           </label>
           <div className="relative">
-            <MdSportsSoccer
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
-              size={15}
-            />
+            <MdSportsSoccer className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={15} />
             <input
               type="text"
               readOnly
@@ -213,15 +208,13 @@ function BookingPanel({ facility, onClose, onSuccess }) {
           </div>
         </div>
 
+        {/* Date */}
         <div>
           <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
             Booking Date
           </label>
           <div className="relative">
-            <MdCalendarMonth
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
-              size={15}
-            />
+            <MdCalendarMonth className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={15} />
             <input
               type="date"
               min={today}
@@ -232,6 +225,7 @@ function BookingPanel({ facility, onClose, onSuccess }) {
           </div>
         </div>
 
+        {/* Time Slot */}
         <div>
           <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
             Time Slot
@@ -253,17 +247,10 @@ function BookingPanel({ facility, onClose, onSuccess }) {
                       : "bg-white/3 border-white/8 text-gray-400 hover:border-white/20 hover:text-gray-200"
                   }`}
                 >
-                  <div
-                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${slot === s ? "bg-blue-600 border-blue-600" : "border-white/20"}`}
-                  >
-                    {slot === s && (
-                      <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                    )}
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${slot === s ? "bg-blue-600 border-blue-600" : "border-white/20"}`}>
+                    {slot === s && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                   </div>
-                  <BsClockHistory
-                    size={13}
-                    className={slot === s ? "text-blue-400" : "text-gray-600"}
-                  />
+                  <BsClockHistory size={13} className={slot === s ? "text-blue-400" : "text-gray-600"} />
                   {s}
                 </button>
               ))}
@@ -271,36 +258,26 @@ function BookingPanel({ facility, onClose, onSuccess }) {
           )}
         </div>
 
+        {/* Duration */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-              Duration
-            </label>
-            <span className="text-xs font-bold text-blue-400">
-              {hours} hr{hours > 1 ? "s" : ""}
-            </span>
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Duration</label>
+            <span className="text-xs font-bold text-blue-400">{hours} hr{hours > 1 ? "s" : ""}</span>
           </div>
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setHours((h) => Math.max(1, h - 1))}
               className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center justify-center text-lg font-bold transition-all flex-shrink-0"
-            >
-              −
-            </button>
+            >−</button>
             <div className="flex-1 h-2 rounded-full bg-white/8 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-blue-600 transition-all duration-200"
-                style={{ width: `${(hours / 8) * 100}%` }}
-              />
+              <div className="h-full rounded-full bg-blue-600 transition-all duration-200" style={{ width: `${(hours / 8) * 100}%` }} />
             </div>
             <button
               type="button"
               onClick={() => setHours((h) => Math.min(8, h + 1))}
               className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white flex items-center justify-center text-lg font-bold transition-all flex-shrink-0"
-            >
-              +
-            </button>
+            >+</button>
           </div>
           <div className="flex justify-between mt-1.5">
             <span className="text-[10px] text-gray-600">1 hr min</span>
@@ -308,23 +285,22 @@ function BookingPanel({ facility, onClose, onSuccess }) {
           </div>
         </div>
 
+        {/* Price summary */}
         <div className="rounded-xl bg-blue-600/10 border border-blue-500/20 p-4">
           <div className="flex justify-between mb-2">
             <span className="text-xs text-gray-400">Rate</span>
             <span className="text-xs text-gray-300">
-              ${Number(pricePerHour).toLocaleString()} × {hours} hr
-              {hours > 1 ? "s" : ""}
+              ${Number(pricePerHour).toLocaleString()} × {hours} hr{hours > 1 ? "s" : ""}
             </span>
           </div>
           <div className="h-px bg-white/8 mb-3" />
           <div className="flex justify-between items-center">
             <span className="text-sm font-bold text-white">Total Price</span>
-            <span className="text-xl font-black text-blue-300">
-              ${totalPrice.toLocaleString()}
-            </span>
+            <span className="text-xl font-black text-blue-300">${totalPrice.toLocaleString()}</span>
           </div>
         </div>
 
+        {/* Submit */}
         <button
           type="button"
           disabled={loading}
@@ -354,6 +330,8 @@ function BookingPanel({ facility, onClose, onSuccess }) {
   );
 }
 
+// ── Success Card ──────────────────────────────────────────────────────────────
+
 function SuccessCard({ booking, onReset }) {
   return (
     <motion.div
@@ -369,36 +347,23 @@ function SuccessCard({ booking, onReset }) {
         </div>
         <div>
           <h3 className="text-xl font-black text-white">Booking Confirmed!</h3>
-          <p className="text-sm text-gray-400 mt-1">
-            Your slot has been reserved.
-          </p>
+          <p className="text-sm text-gray-400 mt-1">Your slot has been reserved.</p>
         </div>
         <div className="w-full rounded-xl bg-white/5 border border-white/8 divide-y divide-white/5 overflow-hidden text-left">
           {[
             { label: "Facility", value: booking.facilityName },
             {
               label: "Date",
-              value: new Date(booking.date).toLocaleDateString("en-GB", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
+              value: new Date(booking.bookingDate).toLocaleDateString("en-GB", {
+                day: "numeric", month: "long", year: "numeric",
               }),
             },
-            { label: "Slot", value: booking.slot },
-            {
-              label: "Duration",
-              value: `${booking.hours} hr${booking.hours > 1 ? "s" : ""}`,
-            },
-            {
-              label: "Total",
-              value: `$${booking.totalPrice.toLocaleString()}`,
-            },
-            { label: "Status", value: "⏳ Pending" },
+            { label: "Slot",     value: booking.timeSlot },
+            { label: "Duration", value: `${booking.hours} hr${booking.hours > 1 ? "s" : ""}` },
+            { label: "Total",    value: `$${Number(booking.totalPrice).toLocaleString()}` },
+            { label: "Status",   value: "⏳ Pending" },
           ].map(({ label, value }) => (
-            <div
-              key={label}
-              className="flex items-center justify-between px-4 py-2.5"
-            >
+            <div key={label} className="flex items-center justify-between px-4 py-2.5">
               <span className="text-xs text-gray-500">{label}</span>
               <span className="text-xs text-white font-semibold">{value}</span>
             </div>
@@ -424,6 +389,8 @@ function SuccessCard({ booking, onReset }) {
   );
 }
 
+// ── Main Export ───────────────────────────────────────────────────────────────
+
 export default function FacilityDetailsClient({ facility }) {
   const {
     facilityName = "",
@@ -447,11 +414,7 @@ export default function FacilityDetailsClient({ facility }) {
 
   const fadeUp = {
     hidden: { opacity: 0, y: 24 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
-    },
+    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
   };
 
   const stagger = {
@@ -463,6 +426,7 @@ export default function FacilityDetailsClient({ facility }) {
     <div className="min-h-screen bg-gray-950 text-white">
       <Toaster position="top-right" />
 
+      {/* Hero Image */}
       <div className="relative w-full h-[45vh] md:h-[55vh] lg:h-[60vh] overflow-hidden bg-gray-900">
         {!imgError && image && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -474,17 +438,14 @@ export default function FacilityDetailsClient({ facility }) {
             className={`w-full h-full object-cover transition-opacity duration-700 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
           />
         )}
-
         {!imgLoaded && !imgError && image && (
           <div className="absolute inset-0 bg-gray-800 animate-pulse" />
         )}
-
         {(imgError || !image) && (
           <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
             <MdSportsSoccer size={80} className="text-gray-800" />
           </div>
         )}
-
         <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/40 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-gray-950/60 to-transparent" />
 
@@ -499,8 +460,7 @@ export default function FacilityDetailsClient({ facility }) {
 
         <div className="absolute top-4 right-4 z-10 flex items-center gap-2 flex-wrap justify-end">
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-950/80 border border-white/15 backdrop-blur-md text-white text-[11px] font-bold">
-            <IoFlash size={11} className="text-blue-400" />
-            {facilityType}
+            <IoFlash size={11} className="text-blue-400" /> {facilityType}
           </span>
           {verified && (
             <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 backdrop-blur-md text-emerald-300 text-[11px] font-bold">
@@ -511,23 +471,22 @@ export default function FacilityDetailsClient({ facility }) {
 
         <div className="absolute bottom-6 left-4 md:left-8 z-10">
           <div className="flex items-baseline gap-1.5 px-4 py-2 rounded-xl bg-blue-600 shadow-lg shadow-blue-600/40">
-            <span className="text-white font-black text-xl leading-none">
-              ${Number(pricePerHour).toLocaleString()}
-            </span>
+            <span className="text-white font-black text-xl leading-none">${Number(pricePerHour).toLocaleString()}</span>
             <span className="text-blue-200 text-xs font-medium">/hour</span>
           </div>
         </div>
       </div>
 
+      {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-8 xl:gap-12">
+
+          {/* Left column */}
           <div className="flex flex-col gap-8">
             <motion.div variants={fadeUp} initial="hidden" animate="show">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
-                  <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight">
-                    {facilityName}
-                  </h1>
+                  <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight">{facilityName}</h1>
                   <div className="flex items-center gap-2 mt-2">
                     <MdLocationOn size={16} className="text-blue-400" />
                     <span className="text-gray-400 text-sm">{location}</span>
@@ -543,33 +502,12 @@ export default function FacilityDetailsClient({ facility }) {
               </div>
             </motion.div>
 
-            <motion.div
-              variants={stagger}
-              initial="hidden"
-              animate="show"
-              className="grid grid-cols-2 sm:grid-cols-4 gap-3"
-            >
+            <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
-                {
-                  icon: <MdPeople size={18} />,
-                  label: "Capacity",
-                  value: `${capacity} players`,
-                },
-                {
-                  icon: <MdAttachMoney size={18} />,
-                  label: "Price",
-                  value: `$${Number(pricePerHour).toLocaleString()}/hr`,
-                },
-                {
-                  icon: <MdTimer size={18} />,
-                  label: "Slots",
-                  value: `${availableTimeSlots.length} available`,
-                },
-                {
-                  icon: <MdEmail size={18} />,
-                  label: "Contact",
-                  value: "Email owner",
-                },
+                { icon: <MdPeople size={18} />,      label: "Capacity", value: `${capacity} players` },
+                { icon: <MdAttachMoney size={18} />, label: "Price",    value: `$${Number(pricePerHour).toLocaleString()}/hr` },
+                { icon: <MdTimer size={18} />,       label: "Slots",    value: `${availableTimeSlots.length} available` },
+                { icon: <MdEmail size={18} />,       label: "Contact",  value: "Email owner" },
               ].map(({ icon, label, value }) => (
                 <motion.div key={label} variants={fadeUp}>
                   <InfoChip icon={icon} label={label} value={value} />
@@ -577,43 +515,22 @@ export default function FacilityDetailsClient({ facility }) {
               ))}
             </motion.div>
 
-            <motion.div
-              variants={fadeUp}
-              initial="hidden"
-              animate="show"
-              className="flex flex-col gap-3"
-            >
-              <h2 className="text-lg font-black text-white tracking-tight">
-                About this Facility
-              </h2>
-              <p className="text-sm text-gray-400 leading-relaxed">
-                {description}
-              </p>
+            <motion.div variants={fadeUp} initial="hidden" animate="show" className="flex flex-col gap-3">
+              <h2 className="text-lg font-black text-white tracking-tight">About this Facility</h2>
+              <p className="text-sm text-gray-400 leading-relaxed">{description}</p>
             </motion.div>
 
-            <motion.div
-              variants={fadeUp}
-              initial="hidden"
-              animate="show"
-              className="flex flex-col gap-3"
-            >
-              <h2 className="text-lg font-black text-white tracking-tight">
-                Available Time Slots
-              </h2>
+            <motion.div variants={fadeUp} initial="hidden" animate="show" className="flex flex-col gap-3">
+              <h2 className="text-lg font-black text-white tracking-tight">Available Time Slots</h2>
               <div className="flex flex-wrap gap-2">
                 {availableTimeSlots.length > 0 ? (
                   availableTimeSlots.map((s) => (
-                    <span
-                      key={s}
-                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600/10 border border-blue-500/20 text-blue-300 text-xs font-semibold"
-                    >
+                    <span key={s} className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600/10 border border-blue-500/20 text-blue-300 text-xs font-semibold">
                       <MdAccessTime size={13} /> {s}
                     </span>
                   ))
                 ) : (
-                  <p className="text-sm text-gray-500">
-                    No slots listed for this facility.
-                  </p>
+                  <p className="text-sm text-gray-500">No slots listed for this facility.</p>
                 )}
               </div>
             </motion.div>
@@ -623,33 +540,15 @@ export default function FacilityDetailsClient({ facility }) {
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-black text-sm flex-shrink-0">
                   {ownerEmail?.charAt(0)?.toUpperCase() || "O"}
                 </div>
-
                 <div className="min-w-0 flex-1 overflow-hidden">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
-                    Facility Owner
-                  </p>
-
-                  <p className="text-sm font-semibold text-blue-400 break-all leading-relaxed">
-                    {ownerEmail || "No email provided"}
-                  </p>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Facility Owner</p>
+                  <p className="text-sm font-semibold text-blue-400 break-all leading-relaxed">{ownerEmail || "No email provided"}</p>
                 </div>
-
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    if (!ownerEmail) {
-                      alert("No owner email found");
-                      return;
-                    }
-
-                    const mailUrl = `mailto:${ownerEmail}?subject=${encodeURIComponent(
-                      `Inquiry about ${facilityName || "Facility"}`,
-                    )}`;
-
-                    window.open(mailUrl, "_self");
+                  onClick={() => {
+                    if (!ownerEmail) return alert("No owner email found");
+                    window.open(`mailto:${ownerEmail}?subject=${encodeURIComponent(`Inquiry about ${facilityName || "Facility"}`)}`, "_self");
                   }}
                   className="ml-auto flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white text-xs font-semibold transition-all duration-300 flex-shrink-0"
                 >
@@ -659,12 +558,8 @@ export default function FacilityDetailsClient({ facility }) {
               </div>
             </motion.div>
 
-            <motion.div
-              variants={fadeUp}
-              initial="hidden"
-              animate="show"
-              className="lg:hidden"
-            >
+            {/* Mobile book button */}
+            <motion.div variants={fadeUp} initial="hidden" animate="show" className="lg:hidden">
               <button
                 type="button"
                 onClick={() => setShowForm(true)}
@@ -675,22 +570,14 @@ export default function FacilityDetailsClient({ facility }) {
             </motion.div>
           </div>
 
+          {/* Right column — desktop */}
           <div className="hidden lg:block">
             <div className="sticky top-8">
               <AnimatePresence mode="wait">
                 {booking ? (
-                  <SuccessCard
-                    key="success"
-                    booking={booking}
-                    onReset={() => setBooking(null)}
-                  />
+                  <SuccessCard key="success" booking={booking} onReset={() => setBooking(null)} />
                 ) : (
-                  <BookingPanel
-                    key="form"
-                    facility={facility}
-                    onClose={() => {}}
-                    onSuccess={(b) => setBooking(b)}
-                  />
+                  <BookingPanel key="form" facility={facility} onClose={() => {}} onSuccess={(b) => setBooking(b)} />
                 )}
               </AnimatePresence>
             </div>
@@ -698,30 +585,24 @@ export default function FacilityDetailsClient({ facility }) {
         </div>
       </div>
 
+      {/* Mobile sheet */}
       <AnimatePresence>
         {showForm && !booking && (
           <>
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setShowForm(false)}
               className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 lg:hidden"
             />
             <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
+              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
               transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
               className="fixed bottom-0 left-0 right-0 z-50 lg:hidden max-h-[92vh] overflow-y-auto rounded-t-2xl"
             >
               <BookingPanel
                 facility={facility}
                 onClose={() => setShowForm(false)}
-                onSuccess={(b) => {
-                  setBooking(b);
-                  setShowForm(false);
-                }}
+                onSuccess={(b) => { setBooking(b); setShowForm(false); }}
               />
             </motion.div>
           </>
@@ -729,17 +610,10 @@ export default function FacilityDetailsClient({ facility }) {
 
         {booking && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 lg:hidden flex items-center justify-center p-4"
           >
-            <SuccessCard
-              booking={booking}
-              onReset={() => {
-                setBooking(null);
-                setShowForm(false);
-              }}
-            />
+            <SuccessCard booking={booking} onReset={() => { setBooking(null); setShowForm(false); }} />
           </motion.div>
         )}
       </AnimatePresence>
