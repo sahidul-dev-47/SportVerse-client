@@ -155,9 +155,9 @@ export default function SportVerseBanner() {
       ref={containerRef}
       className="relative min-h-screen flex items-center overflow-hidden bg-gray-950"
     >
-      {/* ══════════════════════════════════════════
-          BACKGROUND — stadium image + layered overlays
-      ══════════════════════════════════════════ */}
+     
+        
+    
       <div className="absolute inset-0 z-0">
         {/* Stadium background image */}
         <Image
@@ -192,9 +192,9 @@ export default function SportVerseBanner() {
         <rect width="100%" height="100%" fill="url(#hero-grid)" />
       </svg>
 
-      {/* ══════════════════════════════════════════
-          CONTENT
-      ══════════════════════════════════════════ */}
+     
+     
+   
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-0 lg:min-h-screen flex items-center">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-10 xl:gap-16 items-center w-full">
 
@@ -239,7 +239,7 @@ export default function SportVerseBanner() {
             {/* CTA buttons */}
             <motion.div variants={fadeUp} className="mt-8 flex flex-wrap gap-3">
               <Link
-                href="/facilities"
+                href="/all-facilities"
                 className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-all duration-200 shadow-lg shadow-blue-600/35 hover:shadow-blue-500/45 hover:scale-[1.03] active:scale-[0.97]"
               >
                 <MdSportsSoccer size={18} />
@@ -250,7 +250,7 @@ export default function SportVerseBanner() {
                 />
               </Link>
 
-              <button className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl border border-white/15 bg-white/8 hover:bg-white/12 text-white font-semibold text-sm backdrop-blur-sm transition-all duration-200 hover:border-white/25">
+              <button id="#" className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl border border-white/15 bg-white/8 hover:bg-white/12 text-white font-semibold text-sm backdrop-blur-sm transition-all duration-200 hover:border-white/25">
                 <MdPlayCircle
                   size={20}
                   className="text-blue-400 group-hover:scale-110 transition-transform duration-200"
@@ -299,7 +299,7 @@ export default function SportVerseBanner() {
             </motion.div>
           </motion.div>
 
-          {/* ── RIGHT IMAGE CLUSTER ──────────────── */}
+       
           <motion.div
             style={{ rotateX: rx, rotateY: ry, transformPerspective: 1000 }}
             className="relative hidden lg:block h-[620px]"

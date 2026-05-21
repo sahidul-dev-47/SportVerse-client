@@ -222,7 +222,7 @@ export default function WhyChooseUs() {
           {/* CTA on right */}
           <FadeUp delay={0.3} className="flex-shrink-0">
             <Link
-              href="/facilities"
+              href="/all-facilities"
               className="group inline-flex items-center gap-3 px-7 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-all duration-200 shadow-lg shadow-blue-600/25 hover:shadow-blue-500/35 hover:scale-[1.03] active:scale-[0.97]"
             >
               <MdSportsSoccer size={18} />
