@@ -4,7 +4,6 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { authClient, useSession } from "@/lib/auth-client";
 
-
 const FACILITY_TYPES = [
   { label: "Football Ground",  emoji: "⚽" },
   { label: "Cricket Ground",   emoji: "🏏" },
@@ -66,7 +65,6 @@ function Field({ label, children }) {
 
 export default function AddFacilitiesPage() {
   const { data: session, isPending } = useSession();
-  const userEmail = session?.user?.email || "";
   const [step, setStep] = useState(1);
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [submitted, setSubmitted] = useState(false);
@@ -82,65 +80,64 @@ export default function AddFacilitiesPage() {
     description:  "",
     ownerEmail:   "",
   });
-const onSubmit = async (e) => {
-  e.preventDefault();
 
-  try {
-  
-    if (isPending) {
-      alert("Session loading...");
-      return;
-    }
-
-    if (!session?.user?.email) {
-      alert("Please login first");
-      return;
-    }
-
-    const tokenResponse = await authClient.token();
-    const token = tokenResponse?.data?.token;
-
-    if (!token) {
-      alert("Token not found. Please login again.");
-      return;
-    }
-
-    const facilitiesData = {
-      ...form,
-      ownerEmail: session.user.email.trim().toLowerCase(),
-      availableTimeSlots: selectedSlots,
-      pricePerHour: Number(form.pricePerHour),
-      capacity: Number(form.capacity),
-      createdAt: new Date(),
-    };
-
-    console.log("SENDING:", facilitiesData);
-
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_SERVER_URL}/facilities`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(facilitiesData),
+  // Fixed Go Live Function
+  const handleGoLive = async () => {
+    try {
+      if (isPending) {
+        alert("Session loading...");
+        return;
       }
-    );
 
-    const data = await res.json();
+      if (!session?.user?.email) {
+        alert("Please login first");
+        return;
+      }
 
-    if (!res.ok) {
-      throw new Error(data.message || "Failed to add facility");
+      const tokenResponse = await authClient.token();
+      const token = tokenResponse?.data?.token;
+
+      if (!token) {
+        alert("Token not found. Please login again.");
+        return;
+      }
+
+      const facilitiesData = {
+        ...form,
+        ownerEmail: session.user.email.trim().toLowerCase(),
+        availableTimeSlots: selectedSlots,
+        pricePerHour: Number(form.pricePerHour),
+        capacity: Number(form.capacity),
+        createdAt: new Date(),
+      };
+
+      console.log("SENDING:", facilitiesData);
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/facilities`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(facilitiesData),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to add facility");
+      }
+
+      setSubmitted(true);
+
+    } catch (error) {
+      console.error("SUBMIT ERROR:", error);
+      alert(error.message || "Something went wrong");
     }
-
-    setSubmitted(true);
-
-  } catch (error) {
-    console.error("SUBMIT ERROR:", error);
-    alert(error.message || "Something went wrong");
-  }
-};
+  };
 
   const patch = (field) => (e) => {
     setForm((f) => ({ ...f, [field]: e.target.value }));
@@ -208,6 +205,7 @@ const onSubmit = async (e) => {
       </div>
     );
   }
+
   return (
     <div className="min-h-screen bg-[#0a0f1a] text-white flex items-start justify-center p-4 py-10">
       <div
@@ -283,7 +281,7 @@ const onSubmit = async (e) => {
         </div>
 
         <div className="bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden backdrop-blur-sm">
-          <form onSubmit={onSubmit}>
+          <form onSubmit={(e) => e.preventDefault()}>   {/* Fixed */}
             <div className="p-6 md:p-8 min-h-[380px]">
               <AnimatePresence mode="wait">
 
@@ -377,9 +375,7 @@ const onSubmit = async (e) => {
                 {step === 3 && (
                   <motion.div key="s3" variants={slide} initial="hidden" animate="visible" exit="exit" className="space-y-5">
                     <StepHeader title="Available Time Slots" sub="Select every slot your facility is open" />
-                    
                     <input type="hidden" name="selectedSlots" value={JSON.stringify(selectedSlots)} />
-
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {TIME_SLOTS.map((slot) => {
                         const on = selectedSlots.includes(slot);
@@ -428,7 +424,7 @@ const onSubmit = async (e) => {
                         { k: "Facility Name", v: form.facilityName },
                         { k: "Type",          v: form.facilityType },
                         { k: "Location",      v: form.location },
-                        { k: "Price / Hour",  v: `$ ${form.pricePerHour}` },
+                        { k: "Price / Hour",  v: `৳ ${form.pricePerHour}` },
                         { k: "Capacity",      v: `${form.capacity} persons` },
                         { k: "Image URL",     v: form.image },
                       ].map(({ k, v }) => (
@@ -475,10 +471,13 @@ const onSubmit = async (e) => {
               </div>
               
               <motion.button
-                type={step < 4 ? "button" : "submit"}
+                type="button"   // Fixed
                 whileTap={{ scale: 0.97 }}
                 disabled={step < 4 && !canNext()}
-                onClick={() => { if (step < 4) setStep((s) => s + 1); }}
+                onClick={() => { 
+                  if (step < 4) setStep((s) => s + 1); 
+                  else handleGoLive(); 
+                }}
                 className="px-6 py-2.5 bg-emerald-400 text-[#0a0f1a] text-sm font-black rounded-xl hover:bg-emerald-300 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
               >
                 {step < 4 ? "Continue →" : "🚀 Go Live"}
